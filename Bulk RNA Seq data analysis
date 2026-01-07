@@ -1,0 +1,140 @@
+#load the libraries
+library(DESeq2)
+library(vsn) 
+
+#before loading data, make sure that the working directory is set properly.
+#session -> set working directory
+
+#loading the gene expression matrix 
+ge_matrix <- read.table('NCOMMS-19-7936188_bulk_RNAseq_raw_counts.txt.gz', header = TRUE, sep = '\t')
+dim(ge_matrix)
+ge_matrix[1:4, 1:4]
+#the ge_matrix has 58k rows (corresponding to genes) & 94 cols (corresponding to cells)
+
+#load metadata - gives info about the cells 
+pheno_matrix <- read.table('NCOMMS-19-7936188_bulk_RNAseq_metadata.txt.gz', header = TRUE, sep = '\t', stringsAsFactors = TRUE)
+pheno_matrix[1:4, 1:4]
+dim(pheno_matrix)
+#no. of cols of ge_matrix = no. of rows of pheno_matrix as both contain info on cells 1 to n
+
+#assign sampleID of pheno_matrix as rownames for easy access
+rownames(pheno_matrix) <- pheno_matrix$sample_id
+dim(pheno_matrix)
+head(pheno_matrix)
+
+#check if both ge matrix and pheno matrix are properly aligned 
+all(rownames(pheno_matrix) == colnames(ge_matrix))
+
+#generating index for subsetting
+#in the pheno matrix, we have data of different cell types (CD4 Naive or Memory),
+#cytokine conditions (IFNB, Th17, Th2, Th1, Th0, resting, iTreg), simulation time (16h/ 5d)
+#we will make a subset of this pheno matrix for easier comparison 
+#in this case the CD4+ Memory cells after 5 days of treatment vs. control.
+stimTime    <- '5d'
+conditions  <- c('Th2', 'Th0') 
+celltype    <- 'CD4_Memory'
+
+#generating new ge_matrix and pheno_matrix
+toSelect <- pheno_matrix$stimulation_time == stimTime & pheno_matrix$cytokine_condition %in% conditions & pheno_matrix$cell_type == celltype
+pheno_matrix.subset <- pheno_matrix[toSelect, ]
+ge_matrix.subset <- ge_matrix[ , toSelect]
+#we initially had data for 94 cells, now we have data for 9 cells after subsetting
+
+#use DESeq2 package for differential analysis of count data
+dds <- DESeqDataSetFromMatrix(countData = ge_matrix.subset, colData = pheno_matrix.subset, design = ~ cytokine_condition)
+#countData - a matrix of non-negative integers
+#colData - a DataFrame or data.frame with at least a single column. 
+#          Rows of colData (cells) correspond to columns of countData (metadata basically)
+#design - a formula or matrix. expresses how the counts for each gene depend on the 
+#         variables in colData
+
+#filtering genes with < 10 reads across all samples
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+dds
+#counts(dds) extracts the raw count matrix from DESeq object 
+
+
+#preprocessing
+
+#calculating size factors 
+dds <- estimateSizeFactors(dds)
+sizeFactors(dds)
+
+#plotting size factors with total number of reads in each sample
+plot(sizeFactors(dds), 
+    colSums(counts(dds, normalized=F)), 
+    xlab = 'Size factor',
+    ylab = 'Total number of reads', 
+    pch = 19)
+
+
+#explorative analysis
+
+#computing PCA
+rltfd <- rlog(dds, blind=FALSE) #rlog
+rltfd.pca <- prcomp(t(assay(rltfd)), scale = TRUE)
+
+#scree plot for PCA
+require(factoextra)
+fviz_eig(rltfd.pca)
+fviz_pca_ind(rltfd.pca)
+
+#plotting sample groups by sequencing batch to predict confounding effects
+plotPCA(rltfd, intgroup = 'sequencing_batch',ntop=26656)
+
+#plotting sample groups by treatment to predict a strong biological signal
+plotPCA(rltfd, intgroup = 'cytokine_condition') 
+
+
+#differential expression
+
+#using DESeqDataSetFromMatrix to create DESeq object
+dds <- DESeq(dds)
+
+#results table
+res <- results(dds)
+dim(res)
+res
+
+
+#analysis of the outcome
+
+#significantly differentially expressed genes
+sum(res$padj <= 0.01 & abs(res$log2FoldChange) > 1, na.rm = TRUE)
+#we have 25 significantly differentially expressed genes
+
+#volcano plot
+EnhancedVolcano(res, lab = rownames(res), 
+                x = 'log2FoldChange', y = 'padj', 
+                subtitle = 'Th2 vs Th0', labSize = 3, 
+                pCutoff = 0.01,
+                FCcutoff = 1,
+                drawConnectors = TRUE)
+
+#heatmaps
+DEG.idx <- which(res$padj <= 0.01 & abs(res$log2FoldChange) > 1)
+res[DEG.idx,]
+df <- as.data.frame(colData(dds)[,c("cytokine_condition","donor_id", "sequencing_batch")])
+pheatmap(assay(rltfd)[DEG.idx,], annotation_col=df, treeheight_row = 0, treeheight_col = 0, scale = "row")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
