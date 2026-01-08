@@ -12,3 +12,8 @@ list2 <- rownames(DESeqMemRes[idx2,])
 sharedDEGs <- intersect(list1, list2)
 naiveSpecificDEGs <- setdiff(list1, list2)
 memSpecificDEGs <- setdiff(list2, list1)
+
+# And our 10 genes with the stronges response are:
+cat("Number of shared DEGs between memory and naive CD4+ cells:" , length(sharedDEGs), "\n")
+cat("Number of DEGs specific to naive CD4+ cells:" , length(naiveSpecificDEGs), "\n")
+cat("Number of DEGs specific to memory CD4+ cells:" , length(memSpecificDEGs), "\n")
