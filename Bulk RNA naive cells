@@ -1,0 +1,120 @@
+# load required packages
+require(ggplot2, quietly = TRUE)
+require(DESeq2, quietly = TRUE)
+require(EnhancedVolcano, quietly = TRUE)
+
+# loading count matrix 
+ge_matrix <- read.table('./data/NCOMMS-19-7936188_bulk_RNAseq_raw_counts.txt.gz', header = TRUE, sep = '\t')
+dim(ge_matrix)
+
+# loading phenotype annotation data 
+pheno_matrix <- read.table('./data/NCOMMS-19-7936188_bulk_RNAseq_metadata.txt.gz', header = TRUE, sep = '\t', stringsAsFactors = TRUE)
+
+# Assign the column "sample_id" as rownames of the pheno_matrix data.frame
+rownames(pheno_matrix) <- pheno_matrix$sample_id
+dim(pheno_matrix)
+head(pheno_matrix)
+
+# Create an index "toSelect", selecting samples (rows) from the phenotype matrix "pheno_matrix" where column
+# "stimulation_time" equals "5d", the cell phenotype ("cytokine_condition") equals either 'Th2' or'Th0', and 
+# the sample cell type "cell_type" is "CD4_Naive"
+stimTime    <- '5d'
+conditions  <- c('Th2', 'Th0')
+celltype    <- 'CD4_Naive'
+
+toSelect <- pheno_matrix$stimulation_time == stimTime & pheno_matrix$cytokine_condition %in% conditions & pheno_matrix$cell_type == celltype
+
+# We use this index now to subset our samples before doing the differential 
+# expression analysis.
+pheno_matrix_subset <- pheno_matrix[toSelect, ]
+ge_matrix_subset <- ge_matrix[ , toSelect]
+
+dim(pheno_matrix_subset)
+dim(ge_matrix_subset)
+
+#generating the dds object
+dds <- DESeqDataSetFromMatrix(countData = ge_matrix_subset, colData = pheno_matrix_subset, design = ~ cytokine_condition)
+
+#applying filtering
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+dds
+
+# This DESeq2 dataset can now be used to plot a principle component analysis, e.g. to inspect whether the samples separate according to the applied treatment.
+plotPCA(rlog(dds), intgroup = 'cytokine_condition')
+
+# However, we dont want to see a separation of samples by by sequencing batch as this would constitute a confounding factor. Let's check that
+plotPCA(rlog(dds), intgroup = 'sequencing_batch')
+
+# Now we can run the differential expression analysis with the DESeq command
+dds <- DESeq(dds)
+
+# The result of the analysis is then accessible via the "results" command:
+DESeqRes <- results(dds)
+
+# We can also discard genes with adjusted P-values of NA, which DESeq2 assignes when certain quality control criteria are not met, such as low counts
+DESeqRes <- DESeqRes[!is.na(DESeqRes$padj),]
+
+#Ordering the results table by adjusted p-value (column "padj") in ascending order
+DESeqRes_df <- as.data.frame(DESeqRes)
+
+# Ensure padj is numeric
+DESeqRes_df$padj <- as.numeric(DESeqRes_df$padj)
+
+# Sort by padj
+DESeqResSorted <- DESeqRes_df[order(DESeqRes_df$padj), ]
+
+# Now we can filter out the statistically significant differentially expressed genes. Applying two criteria to create an index, column padj <= 0.01 and the  absolute value of column log2FoldChange > 1
+idx <- which(!is.na(DESeqResSorted$padj) & DESeqResSorted$padj <= 0.01 & abs(DESeqResSorted$log2FoldChange) > 1)
+
+cat("number of significant DEGs:" , length(idx), "\n")
+
+# And our 10 genes with the stronges response are:
+DESeqResSorted[head(idx, 10),]
+
+# Finally, a volcano plot is a good way of visualizing the result of the differential expression analysis,
+EnhancedVolcano(DESeqRes, 
+                lab = rownames(DESeqRes), 
+                x = 'log2FoldChange', y = 'padj', 
+                subtitle = 'Th2 vs Th0', 
+                labSize = 3, 
+                pCutoff = 0.01,
+                FCcutoff = 1,
+                drawConnectors = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
