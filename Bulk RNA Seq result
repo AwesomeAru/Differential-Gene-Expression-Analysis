@@ -1,0 +1,14 @@
+# Now we can make two lists of DEGs for naive and memory cells, wbich we can then compare.
+# Applying the same two criteria to create an index, column padj <= 0.01 and the absolute value of column log2FoldChange > 1, to both DESeq2 result tables.
+# Finally, storing the shared DEGs between cell types in the list "sharedDEGs",
+# "naiveSpecificDEGs" and "memSpecificDEGs". 
+
+idx1 <- which(!is.na(DESeqRes$padj) & DESeqRes$padj <= 0.01 & abs(DESeqRes$log2FoldChange) > 1)
+list1 <- rownames(DESeqRes[idx1,])
+
+idx2 <- which(!is.na(DESeqMemRes$padj) & DESeqMemRes$padj <= 0.01 & abs(DESeqMemRes$log2FoldChange) > 1)
+list2 <- rownames(DESeqMemRes[idx2,])
+
+sharedDEGs <- intersect(list1, list2)
+naiveSpecificDEGs <- setdiff(list1, list2)
+memSpecificDEGs <- setdiff(list2, list1)
