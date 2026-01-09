@@ -55,12 +55,13 @@ This could be due to the following reasons:
 - Cytokine effect lies beyond PC1–PC2
 
 ### Result
-The outcome of the analysis is that we have 25 differentially expressed genes in CD4 Memory cells.
-We have 939 differentially expressed genes in CD4 Naive cells.
+The outcome of the analysis is:
+- We have 25 differentially expressed genes in CD4 Memory cells.
+- We have 939 differentially expressed genes in CD4 Naive cells.
 
-Number of shared DEGs between memory and naive CD4+ cells: 21 ("ENSG00000158125" "ENSG00000115896" "ENSG00000091181" "ENSG00000168386" "ENSG00000112902" "ENSG00000197594"...)
-Number of DEGs specific to naive CD4+ cells: 918 ("ENSG00000187608" "ENSG00000157330" "ENSG00000171729" "ENSG00000142621" "ENSG00000237276"...)
-Number of DEGs specific to memory CD4+ cells: 4 ("ENSG00000169429" "ENSG00000107249" "ENSG00000138347" "ENSG00000196917")
+- Number of shared DEGs between memory and naive CD4+ cells: 21 ("ENSG00000158125" "ENSG00000115896" "ENSG00000091181" "ENSG00000168386" "ENSG00000112902" "ENSG00000197594"...)
+- Number of DEGs specific to naive CD4+ cells: 918 ("ENSG00000187608" "ENSG00000157330" "ENSG00000171729" "ENSG00000142621" "ENSG00000237276"...)
+- Number of DEGs specific to memory CD4+ cells: 4 ("ENSG00000169429" "ENSG00000107249" "ENSG00000138347" "ENSG00000196917")
 
 The lack of clear distinction of samples by treatment could be due to the fact that only 25 genes are DE in Memory cells, whereas in Naive CD4 cells, that count is 939
 
