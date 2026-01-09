@@ -1,0 +1,26 @@
+#install anndata
+!pip install anndata
+
+# importing anndata
+import anndata as ad
+
+# importing numpy and pandas as well
+import numpy as np
+import pandas as pd
+
+# importing scRNA-seq data from a .h5ad file
+scdr = ad.read_h5ad('scdr.h5ad')
+scdr
+
+# first 10 highest expression values.
+np.flip(np.sort(scdr.X.data))[range(10)]
+
+# selecting only Naive T-cells
+ids = scdr.obs['cell.type'] == 'Naive'
+scdr = scdr[ids, :]
+scdr
+
+# summing over the first axis / dimension
+num_reads = scdr.X.sum(axis=0)
+num_reads
+
