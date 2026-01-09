@@ -5,14 +5,8 @@ Differential Gene Expression Analysis of Bulk and Single Cell RNA Data Using R a
 - Used DESeq2 in R for bulk RNA-seq data analysis and annData and ScyPy in Python for single cell RNA Seq data analysis.
 
 ## Bulk RNA-Seq data analysis using R
-![pheno_matrix](images/pheno_mat_all.png)
-![pheno_matrix_subset](images/pheno_mat_subset.png)
-![ge_matrix_subset](images/ge_mat_subset.png)
-![pca sequencing batch](images/pca_sequencing_batch.png)
-![scree plot](images/scree_plot.png)
-![result table](images/result_table.png)
-![vocano_plot](images/vocano_plot.png)
-![heatmap](images/heatmap.png)
+
+Bulk RNA Seq measures average gene expression across thousands of cells in a pooled sample (like tissue or cells) to identify genes that are significantly turned up (upregulated) or down (downregulated) between different conditions. Here, we want to see the genes which are differentially expressed in CD4 Naive cells and CD4 Memory cells. 
 
 the count matrix (ge_matrix) originally has 58051 rows (genes) and 94 columns (samples/ cells)
 the metadata (pheno_matrix) has 94 rows (corresponding to the cells) and 10 columns (information about the sample)
@@ -23,12 +17,38 @@ we have 9 sample/ cell that satisfy our condition of
 - cell type = CD4 Memory cell
 therefore our ge_matrix is now 58051 x 9 and our pheno_matrix is now 9 x 10
 that is, we are taking all the genes, but only those cells that meet our criteria
-the same follows for CD4 Naive cells. 
+the same follows for CD4 Naive cells.
 
 we remove genes who have < 10 reads across all samples for both Memory and Naive CD4 cells.
 after removing these genes, we have 26656 genes with 10 or more reads in Memory cells. For Naive cells, this count is 27516 genes. 
 
+The count matrix subset and metadata subset after selecting samples that satisfy the above condition-
+- count matrix
+![ge_matrix_subset](images/ge_mat_subset.png)
+- metadata 
+![pheno_matrix_subset](images/pheno_mat_subset.png)
+
+PCA scree plot
+![scree plot](images/scree_plot.png)
+
+We see that samples are not grouped by sequencing batch. This is good as it tells us that sequencing batch is not a technical confounder. 
+![pca sequencing batch](images/pca_sequencing_batch.png)
+
+- DE genes in CD4 Memory cells
+![vocano_plot](images/vocano_plot.png)
+![heatmap](images/heatmap.png)
+
+- DE genes in CD4 Naive cells
+![vocano_plot](images/vocano_plot_naive.png)
+![heatmap](images/heatmap_naive.png)
+
 For Memory cells, we see that, when plotting sample groups by treatment, we dont see a clear distinction (visible for Naive CD4 cells)
+
+- CD4 Memory cells sample groups by treatment
+![vocano_plot](images/pca_condition_memory.png)
+- CD4 Naive cells sample groups by reatment
+![vocano_plot](images/pca_condition_naive.png)
+
 This could be due to the following reasons:
 - Cytokine effect is subtle: PCA is affected by some other stronger factor
 - Cytokine affects a limited gene set: out of 26k genes, only a few genes respond
